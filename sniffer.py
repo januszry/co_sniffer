@@ -38,7 +38,7 @@ SNIFF_WMSP = True
 SNIFF_RTSP = True
 SNIFF_HTTP = True
 SNIFF_TIMEOUT = 1800
-SNIFF_RESULT_FILE = 'sniffed.pickle'
+SNIFF_RESULT_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sniffed.pickle')
 RELEASE_TIMEOUT = 10
 
 rtmp_streams = {}
@@ -53,7 +53,7 @@ result = []
 
 
 def reverse_session_id(session_id):
-    ''' Get reverse session_id, i.e. (A.ip, A.port, B.ip, B.port) -> (B.ip, B.port, A.ip, A.port) '''
+    """Get reverse session_id, i.e. (A.ip, A.port, B.ip, B.port) -> (B.ip, B.port, A.ip, A.port)"""
     return session_id[2:] + session_id[:2]
 
 
@@ -354,7 +354,7 @@ def sniff(pcapfile=None, device=None, timeout=SNIFF_TIMEOUT):
 
 if __name__ == "__main__":
 
-    log_file = r'sniffer.log'
+    log_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sniffer.log')
     log_format = '[%(levelname)s]<%(module)s>-%(funcName)s: %(message)s --- %(asctime)s'
     log_formatter = logging.Formatter(log_format)
     
