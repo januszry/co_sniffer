@@ -1,8 +1,7 @@
 #!/usr/bin/env python2.7
 
-import os
 import logging
-from Commands import Commands, DELIMITER
+from commands import Commands
 logger = logging.getLogger(__name__)
 
 
@@ -21,7 +20,7 @@ class HTTPCommands(Commands):
         self.default_port = '80'
 
     def parse(self):
-        ''' Get stream info from HTTPCommands object '''
+        """Get stream info from HTTPCommands object."""
         try:
             # get GET
             cmd = self.get('GET')

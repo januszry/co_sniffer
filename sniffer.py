@@ -5,32 +5,28 @@ import logging
 import argparse
 import traceback
 import time
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import cPickle as pickle
 import socket
 
 import netifaces
 from scapy.layers.inet import TCP, IP
 from scapy.packet import Raw
-from scapy.utils import hexdump
 from scapy.sendrecv import sniff as _sniff
 
-from lib.Stream import Stream, StreamNoMoreBytes
-from lib.RTMPParser import RTMPParser
-from lib.MMSParser import MMSParser
-from lib.MMSCommand import MMSCommands
-from lib.WMSPParser import WMSPParser
-from lib.WMSPCommand import WMSPCommands
-from lib.RTSPParser import RTSPParser
-from lib.RTSPCommand import RTSPCommands
-from lib.HTTPParser import HTTPParser
-from lib.HTTPCommand import HTTPCommands
+from lib.stream import Stream, StreamNoMoreBytes
+from lib.rtmpparser import RTMPParser
+from lib.mmsparser import MMSParser
+from lib.mmscommand import MMSCommands
+from lib.wmspparser import WMSPParser
+from lib.wmspcommand import WMSPCommands
+from lib.rtspparser import RTSPParser
+from lib.rtspcommand import RTSPCommands
+from lib.httpparser import HTTPParser
+from lib.httpcommand import HTTPCommands
 local_ips = []
 sessions = {}
-    # Session here is different from session in RFC: Only one direction, i.e.
-    # A -> B and B -> A are 2 sessions
+# Session here is different from session in RFC: Only one direction, i.e.
+# A -> B and B -> A are 2 sessions
 
 SNIFF_RTMP = True
 SNIFF_MMSP = True
@@ -38,7 +34,8 @@ SNIFF_WMSP = True
 SNIFF_RTSP = True
 SNIFF_HTTP = True
 SNIFF_TIMEOUT = 1800
-SNIFF_RESULT_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sniffed.pickle')
+SNIFF_RESULT_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                 'sniffed.pickle')
 RELEASE_TIMEOUT = 10
 
 rtmp_streams = {}
@@ -53,12 +50,14 @@ result = []
 
 
 def reverse_session_id(session_id):
-    """Get reverse session_id, i.e. (A.ip, A.port, B.ip, B.port) -> (B.ip, B.port, A.ip, A.port)"""
+    """Get reverse session_id.
+
+    i.e. (A.ip, A.port, B.ip, B.port) -> (B.ip, B.port, A.ip, A.port)"""
     return session_id[2:] + session_id[:2]
 
 
 def packet_handler(pkt):
-    """ Packet Handler Callback from scapy """
+    """Packet Handler Callback from scapy."""
     logger = logging.getLogger(__name__)
 
     global rtmp_streams
@@ -93,7 +92,7 @@ def packet_handler(pkt):
             return
         sessions[session_id] = next_seq
 
-        ''' Payloads of Several Packets are Concatenated into One Stream '''
+        '''Payloads of Several Packets are Concatenated into One Stream'''
         if SNIFF_RTMP:
             # Clear old cached sessions to release memory
             all_sessions = rtmp_streams.keys()
@@ -121,7 +120,7 @@ def packet_handler(pkt):
 
                     # If have 2 AMF commands (play and connect), print the
                     # results
-                    if not cmds is None and 'url' in cmds.stream_info:
+                    if cmds is not None and 'url' in cmds.stream_info:
                         logger.info("RTMP stream found")
                         result.append(('rtmp', cmds.output(out_mode)))
                         rtmp_streams[session_id].dont_scan_again = True
@@ -141,19 +140,21 @@ def packet_handler(pkt):
                     rtmp_streams[session_id].offset = 0
                     traceback.print_exc()
 
-        ''' Several Packets are Parsed and Thrown Away '''
+        '''Several Packets are Parsed and Thrown Away'''
         if SNIFF_MMSP:
             # mms command cannot be chunked, so there is no need to concatenate
             # packet data
             all_sessions = mms_streams.keys()
             for i in all_sessions:
-                if time.time() - mms_streams[i]['timestamp'] >= RELEASE_TIMEOUT:
+                if time.time() - mms_streams[i]['timestamp'] \
+                        >= RELEASE_TIMEOUT:
                     del mms_streams[i]
                     logger.debug("Removed mms session %s", repr(i))
 
             if session_id not in mms_streams:
-                mms_streams[session_id] = {'dont_scan_again':
-                                           False, 'cmds': MMSCommands(), 'timestamp': time.time()}
+                mms_streams[session_id] = {'dont_scan_again': False,
+                                           'cmds': MMSCommands(),
+                                           'timestamp': time.time()}
             elif mms_streams[session_id]['dont_scan_again'] is True:
                 return
 
@@ -168,7 +169,9 @@ def packet_handler(pkt):
 
                 if mms_streams[session_id]['cmds'].count() == 2:
                     logger.info('MMSP stream found')
-                    result.append(('mms', mms_streams[session_id]['cmds'].output('txt')))
+                    result.append(
+                            ('mms',
+                             mms_streams[session_id]['cmds'].output('txt')))
                     mms_streams[session_id]['dont_scan_again'] = True
                     found = True
             except StreamNoMoreBytes:
@@ -176,17 +179,19 @@ def packet_handler(pkt):
             except Exception as e:
                 logger.error("MMS Parser Error: %s", e)
 
-        ''' Several Packets are Parsed and Thrown Away '''
+        '''Several Packets are Parsed and Thrown Away'''
         if SNIFF_HTTP:
             all_sessions = http_streams.keys()
             for i in all_sessions:
-                if time.time() - http_streams[i]['timestamp'] >= RELEASE_TIMEOUT:
+                if time.time() - http_streams[i]['timestamp'] \
+                        >= RELEASE_TIMEOUT:
                     del http_streams[i]
                     logger.debug("Removed http session %s", repr(i))
 
             if session_id not in http_streams:
-                http_streams[session_id] = {'dont_scan_again':
-                                            False, 'cmds': HTTPCommands(), 'timestamp': time.time()}
+                http_streams[session_id] = {'dont_scan_again': False,
+                                            'cmds': HTTPCommands(),
+                                            'timestamp': time.time()}
             elif http_streams[session_id]['dont_scan_again'] is True:
                 return
 
@@ -203,7 +208,8 @@ def packet_handler(pkt):
                         rsession_id = reverse_session_id(session_id)
                         if rsession_id not in http_streams:
                             logger.debug(
-                                "Response indicates stream while no request found")
+                                "Response indicates stream"
+                                "while no request found")
                         else:
                             rcmd = http_streams[rsession_id]['cmds'].get('GET')
                             if not rcmd:
@@ -211,7 +217,10 @@ def packet_handler(pkt):
                                     "Reverse session has no GET request")
                             else:
                                 logger.info('HTTP stream found')
-                                result.append(('http', http_streams[rsession_id]['cmds'].output('txt')))
+                                result.append(
+                                        ('http',
+                                         http_streams[rsession_id]['cmds'].
+                                         output('txt')))
                                 http_streams[
                                     rsession_id]['dont_scan_again'] = True
                                 found = True
@@ -220,7 +229,7 @@ def packet_handler(pkt):
             except Exception as e:
                 logger.error("HTTP Parser Error: %s", e)
 
-        ''' Only ONE Packet from Client to Server is Needed '''
+        '''Only ONE Packet from Client to Server is Needed'''
         if SNIFF_WMSP:
             if session_id in wmsp_streams:
                 return
@@ -231,7 +240,8 @@ def packet_handler(pkt):
             logger.debug("Dissecting stream with WMSP parser: %s", session_id)
             wmsp = WMSPParser()
             try:
-                cmd = wmsp.wmsp_parse_packet(wmsp_streams[session_id], pkt[TCP].dport)
+                cmd = wmsp.wmsp_parse_packet(wmsp_streams[session_id],
+                                             pkt[TCP].dport)
                 if cmd:
                     cmds = WMSPCommands()
                     cmds.add(cmd)
@@ -247,7 +257,7 @@ def packet_handler(pkt):
                 del wmsp_streams[session_id]
                 logger.debug("Removed wmsp session %s", repr(session_id))
 
-        ''' Only ONE Packet from Client to Server is Needed '''
+        '''Only ONE Packet from Client to Server is Needed'''
         if SNIFF_RTSP:
             if session_id in rtsp_streams:
                 return
@@ -283,17 +293,17 @@ def packet_handler(pkt):
 
 
 def setup_arg_parser():
-    """ Setting up the argparse and usage """
-
     parser = argparse.ArgumentParser(description="")
 
     parser.add_argument(
-        "-t", "--timeout", action="store", dest="timeout", default=SNIFF_TIMEOUT, help="Timeout diff from default")
+        "-t", "--timeout", action="store", dest="timeout",
+        default=SNIFF_TIMEOUT, help="Timeout diff from default")
 
     group_input = parser.add_argument_group("Input")
     group = group_input.add_mutually_exclusive_group()
     group.add_argument("-i", action="store", dest="device",
-                       help="Device to sniff on (Default: sniffs on all devices)")
+                       help="Device to sniff on"
+                            "(Default: sniffs on all devices)")
     group.add_argument(
         "-f", action="store", dest="pcapfile", help="PCAP file to read from")
 
@@ -327,8 +337,8 @@ def sniff(pcapfile=None, device=None, timeout=SNIFF_TIMEOUT):
     if pcapfile:
         logger.info("Read packets from dump file '%s'", pcapfile)
         try:
-            _sniff(
-                offline=pcapfile, store=0, filter="tcp", prn=packet_handler, timeout=timeout)
+            _sniff(offline=pcapfile, store=0,
+                   filter="tcp", prn=packet_handler, timeout=timeout)
         except Exception as e:
             logger.error(e)
             traceback.print_exc()
@@ -354,15 +364,15 @@ def sniff(pcapfile=None, device=None, timeout=SNIFF_TIMEOUT):
 
 if __name__ == "__main__":
 
-    log_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sniffer.log')
-    log_format = '[%(levelname)s]<%(module)s>-%(funcName)s: %(message)s --- %(asctime)s'
+    log_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                            'sniffer.log')
+    log_format = "[%(levelname)s]<%(module)s>-%(funcName)s: \
+%(message)s --- %(asctime)s"
     log_formatter = logging.Formatter(log_format)
-    
     logfile_handler = logging.FileHandler(log_file)
     logfile_handler.setFormatter(log_formatter)
     logstream_handler = logging.StreamHandler()
     logstream_handler.setFormatter(log_formatter)
-    
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     logger.addHandler(logfile_handler)
@@ -386,4 +396,3 @@ if __name__ == "__main__":
 
     logger.info("Packet Sniffer")
     sniff(args.pcapfile, args.device, int(args.timeout))
-

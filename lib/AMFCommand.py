@@ -1,9 +1,9 @@
 #!/usr/bin/env python2.7
 
-import os
+
 import traceback
 import logging
-from Commands import Commands, DELIMITER
+from commands import Commands, DELIMITER
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,8 @@ class AMFCommands(Commands):
 
             if 'tcUrl' in self.stream_info and 'playPath' in self.stream_info:
                 self.stream_info['url'] = '/'.join(
-                    [self.stream_info['tcUrl'].rstrip('/'), self.stream_info['playPath']])
+                    [self.stream_info['tcUrl'].rstrip('/'),
+                        self.stream_info['playPath']])
                 self.add_port()
 
         except Exception as e:

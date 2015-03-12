@@ -2,10 +2,9 @@
 
 import struct
 import logging
-import Utils
-from scapy.utils import hexdump
-from Stream import Stream
-from AMFCommand import AMFCommand, AMFCommands
+import utils
+from stream import Stream
+from amfcommand import AMFCommand, AMFCommands
 logger = logging.getLogger(__name__)
 
 
@@ -22,8 +21,8 @@ class RTMPParser():
     AMF_ARRAY = chr(0x08)
 
     chunk_para = {}
-        # Record parameter for each chunk stream id so that Type 2 b10 and Type
-        # 3 b11 chunks can be processed
+    # Record parameter for each chunk stream id so that Type 2 b10 and Type
+    # 3 b11 chunks can be processed
 
     def __init__(self):
         pass
@@ -41,7 +40,7 @@ class RTMPParser():
         H1_rndData = stream.get_bytes(0x600)  # 1536
         H2_rndData = stream.get_bytes(0x600)
 
-        if H1 != chr(0x03) or H1_rndData == None or H2_rndData == None:
+        if H1 != chr(0x03) or H1_rndData is None or H2_rndData is None:
             return cmds
 
         # hexdump(stream.stream)
@@ -59,15 +58,15 @@ class RTMPParser():
         return cmds
 
     def rtmp_parse_packet(self, stream):
-        """
-        Parses the RTMP object at the beginning of the stream.
-        The stream pointer is incremented
+        """Parses the RTMP object at the beginning of the stream.
+
+        The stream pointer is incremented.
 
         Packet header byte 1
         BB BBBBBB
         The first 2 bit indicates the header type as following:
             b00 = 12 byte header (full header).
-            b01 = 8 bytes - like type b00. not including message ID (4 last bytes).
+            b01 = 8 bytes - like type b00. not including message ID (last 4B).
             b10 = 4 bytes - Basic Header and timestamp (3 bytes) are included.
             b11 = 1 byte - only the Basic Header is included.
         The last 6 bit indicates the chunk stream ID
@@ -81,24 +80,24 @@ class RTMPParser():
 
         # Header type b00
         if header_type == 0:
-            timestamp = Utils.str2num(stream.get_bytes(3))
-            body_size = Utils.str2num(stream.get_bytes(3))
+            utils.str2num(stream.get_bytes(3))  # timestamp
+            body_size = utils.str2num(stream.get_bytes(3))
             packet_type = stream.get_byte()
-            stream_id = Utils.str2num(stream.get_bytes(4))
+            utils.str2num(stream.get_bytes(4))  # stream_id
             self.chunk_para[chunk_stream_id]['length'] = body_size
             self.chunk_para[chunk_stream_id]['packet_type'] = packet_type
 
         # Header type b01
         elif header_type == 1:
-            timestamp = Utils.str2num(stream.get_bytes(3))
-            body_size = Utils.str2num(stream.get_bytes(3))
+            utils.str2num(stream.get_bytes(3))  # timestamp
+            body_size = utils.str2num(stream.get_bytes(3))
             packet_type = stream.get_byte()
             self.chunk_para[chunk_stream_id]['length'] = body_size
             self.chunk_para[chunk_stream_id]['packet_type'] = packet_type
 
         # Header type b10
         elif header_type == 2:
-            timestamp = Utils.str2num(stream.get_bytes(3))
+            utils.str2num(stream.get_bytes(3))  # timestamp
             if chunk_stream_id not in self.chunk_para:
                 stream.offset = stream.size
                 return None
@@ -134,7 +133,7 @@ class RTMPParser():
         magic_bytes_count = body_size / 128
         rtmp_payload = stream.get_bytes(body_size + magic_bytes_count)
 
-        if rtmp_payload == None:
+        if rtmp_payload is None:
             return None
 
         # Unchunking the payload
@@ -145,7 +144,8 @@ class RTMPParser():
                     rtmp_payload = rtmp_payload[:n] + rtmp_payload[n + 1:]
                 else:
                     logger.debug(
-                        "Expected RTMP magic byte %x not found in the payload[%d] %s",
+                        "Expected RTMP magic byte %x "
+                        "not found in the payload[%d] %s",
                         magic_byte, n, rtmp_payload[n])
                     return None
             n = n + 1
@@ -156,7 +156,8 @@ class RTMPParser():
         # hexdump(rtmp_payload)
 
         # If it's an AMF0/AMF3 command
-        if packet_type == self.AMF0_COMMAND or packet_type == self.AMF3_COMMAND:
+        if packet_type == self.AMF0_COMMAND or \
+                packet_type == self.AMF3_COMMAND:
             cmd = AMFCommand()
 
             # rtmp_payload_stream.dump()
@@ -170,7 +171,8 @@ class RTMPParser():
             The structure of the RTMP Command is:
                 (String) <Command Name>
                 (Number) <Transaction Id>
-                (Mixed)  <Argument> ex. Null, String, Object: {key1:value1, key2:value2 ... }
+                (Mixed)  <Argument> ex. Null, String, Object: {
+                    key1:value1, key2:value2 ... }
             """
 
             # Reading AMF Command
@@ -204,7 +206,7 @@ class RTMPParser():
 
         # STRING
         if b == self.AMF_STRING:
-            strlen = Utils.str2num(p.get_bytes(2))
+            strlen = utils.str2num(p.get_bytes(2))
             string = p.get_bytes(strlen)
             logger.debug("Found a string [%s]..." % string)
             return string
@@ -232,7 +234,7 @@ class RTMPParser():
             while (p.read_bytes(3) != "\x00\x00\x09"):
 
                 # Property name
-                strlen = Utils.str2num(p.get_bytes(2))
+                strlen = utils.str2num(p.get_bytes(2))
                 key = p.get_bytes(strlen)
                 logger.debug("Property name [%s]...", key)
 
@@ -254,7 +256,7 @@ class RTMPParser():
         # ARRAY
         # don't care
         elif b == self.AMF_ARRAY:
-            arraylen = Utils.str2num(p.get_bytes(4))
+            utils.str2num(p.get_bytes(4))  # arraylen
             logger.debug("Found an array...")
             while p.read_bytes(3) != "\x00\x00\x09":
                 pass

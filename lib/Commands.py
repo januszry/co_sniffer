@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-import os
+
 import urlparse
 
 DELIMITER = "*" * 80
@@ -21,29 +21,29 @@ class Commands(object):
         return result
 
     def add(self, cmd):
-        ''' Adds a new Command object '''
+        """Adds a new Command object."""
         e = self.get(cmd.name)
         if e:
             self.commands.remove(e)
         self.commands.append(cmd)
 
     def get(self, name):
-        ''' Get an Command object by name '''
+        """Get an Command object by name."""
         for c in self.commands:
             if c.name == name:
                 return c
         return None
 
     def count(self):
-        ''' Returns the number of commands '''
+        """Returns the number of commands."""
         return len(self.commands)
 
     def parse(self):
-        ''' Abstract method '''
+        """Abstract method."""
         pass
 
     def add_port(self):
-        ''' Add default port to self.stream_info["url"] '''
+        """Add default port to self.stream_info["url"]."""
         parsed_url = urlparse.urlparse(self.stream_info['url'])
         if not self.default_port:
             return
@@ -51,7 +51,11 @@ class Commands(object):
             port = self.default_port
         else:
             port = parsed_url.port
-        self.stream_info['url'] = parsed_url.scheme + '://' + parsed_url.hostname + ':' + str(port) + parsed_url.path
+        self.stream_info['url'] = "{}://{}:{}{}".format(
+            parsed_url.scheme,
+            parsed_url.hostname,
+            port,
+            parsed_url.path)
         if parsed_url.query:
             self.stream_info['url'] += '?' + parsed_url.query
 
@@ -65,11 +69,10 @@ class Commands(object):
             return result
 
     def output_txt(self):
-        ''' Get plain text of stream properties '''
+        """Get plain text of stream properties."""
         result = [self.stream_info['url']]
         for p in []:
             if p in self.stream_info and len(self.stream_info[p]) > 0:
                 result.append("{}: {}".format(p, self.stream_info[p]))
 
         return '\n'.join(result)
-

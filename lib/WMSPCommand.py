@@ -1,8 +1,7 @@
 #!/usr/bin/env python2.7
 
-import os
 import logging
-from Commands import Commands, DELIMITER
+from commands import Commands
 logger = logging.getLogger(__name__)
 
 
@@ -20,7 +19,7 @@ class WMSPCommands(Commands):
         self.default_port = '80'
 
     def parse(self):
-        ''' Prints the WMSP command object '''
+        """Prints the WMSP command object."""
         try:
             cmd = self.get("xPlayStrm")
             if cmd is None:

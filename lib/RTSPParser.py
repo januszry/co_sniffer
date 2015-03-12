@@ -1,8 +1,6 @@
 #!/usr/bin/env python2.7
 
-import traceback
-import Utils
-from RTSPCommand import RTSPCommand
+from rtspcommand import RTSPCommand
 
 
 class RTSPParser(object):
@@ -11,9 +9,7 @@ class RTSPParser(object):
         pass
 
     def rtsp_parse_packet(self, packet):
-        """
-        Parses the RTSP packet
-        """
+        """Parses the RTSP packet."""
         method = packet.read_bytes(4)
         if method != 'PLAY':
             return None

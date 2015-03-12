@@ -1,8 +1,7 @@
 #!/usr/bin/env python2.7
 
-import os
 import logging
-from Commands import Commands, DELIMITER
+from commands import Commands
 logger = logging.getLogger(__name__)
 
 
@@ -20,7 +19,7 @@ class RTSPCommands(Commands):
         self.default_port = '554'
 
     def parse(self):
-        ''' Get stream info from RTSPCommands object '''
+        """Get stream info from RTSPCommands object."""
         try:
             cmd = self.get("PLAY")
             if cmd is None:

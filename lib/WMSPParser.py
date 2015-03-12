@@ -1,8 +1,6 @@
 #!/usr/bin/env python2.7
 
-import traceback
-import Utils
-from WMSPCommand import WMSPCommand
+from wmspcommand import WMSPCommand
 
 
 class WMSPParser(object):
@@ -38,7 +36,8 @@ class WMSPParser(object):
         wmsp_command = WMSPCommand()
         if 'xPlayStrm' in result and 'host' in result and 'path' in result:
             wmsp_command.name = 'xPlayStrm'
-            wmsp_command.args['host'] = result['host'].rstrip('/') + ':' + str(dport)
+            wmsp_command.args['host'] = result['host'].rstrip('/') + ':' + str(
+                dport)
             wmsp_command.args['path'] = result['path']
             return wmsp_command
         else:

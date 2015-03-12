@@ -1,8 +1,7 @@
 #!/usr/bin/env python2.7
 
-import os
 import logging
-from Commands import Commands, DELIMITER
+from commands import Commands
 logger = logging.getLogger(__name__)
 
 
@@ -21,7 +20,7 @@ class MMSCommands(Commands):
         self.default_port = '1755'
 
     def parse(self):
-        ''' Get stream info from MMSCommands object '''
+        """Get stream info from MMSCommands object."""
         try:
             # CMD Connect info
             cmd = self.get("connect_info")

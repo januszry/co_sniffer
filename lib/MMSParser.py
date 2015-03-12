@@ -1,36 +1,40 @@
 #!/usr/bin/env python2.7
 
-import traceback
 import logging
-import Utils
-from MMSCommand import MMSCommand
+import utils
+from mmscommand import MMSCommand
 logger = logging.getLogger(__name__)
 
 
 class MMSParser(object):
-    '''
+
+    """Parser for MMS Command.
+
     Little Endian
     Convert Method: str[::-1]
 
     MMS Commmand Packet Structure:
     +-------------+-------------+-------------+-------------+
     | 01 00 00 00 | -- -- -- -- | -- -- -- -- | -- -- -- -- |
-    | START SIGN  |  SIGNATURE  | CMD LENGTH  | PROTO TYPE  |  CMD_LENGTH is calculated from start of next line
+    | START SIGN  |  SIGNATURE  | CMD LENGTH  | PROTO TYPE  |
     +-------------+-------------+-------------+-------------+
     | -- -- -- -- | -- -- -- -- | -- -- -- --   -- -- -- -- |
-    | LEN to END  | SEQ NUMBER  |         TIME STAMP        |  LEN_TO_END is number of 8Bytes till end
+    | LEN to END  | SEQ NUMBER  |         TIME STAMP        |
     +-------------+-------------+-------------+-------------+
     | -- -- -- -- | -- --|-- -- | -- -- -- -- | -- -- -- -- |
-    | LEN to END  |  CMD | DIRE |   PREFIX 1  |   PREFIX 2  |  DIRE is MMS_DIRECTION
+    | LEN to END  |  CMD | DIRE |   PREFIX 1  |   PREFIX 2  |
     +-------------+-------------+-------------+-------------+
     | -- ...                                                |
     | DATA                                                  |
     +-------------+-------------+-------------+-------------+
     | -- ...      | 00 00 00 00 | 00 00 00 00 | 00 00 00 00 |
-    | DATA        |                 PADDING                 |  PADDING to times of 8Bytes
+    | DATA        |                 PADDING                 |
     +-------------+-------------+-------------+-------------+
 
-    '''
+    CMD_LENGTH is calculated from start of next line
+    LEN_TO_END is number of 8Bytes till end
+    DIRE is MMS_DIRECTION
+    PADDING to times of 8Bytes"""
 
     MMS_COMMAND_START = '\x00\x00\x00\x01'
     MMS_PROTO = 'MMS '
@@ -59,22 +63,17 @@ class MMSParser(object):
         pass
 
     def mms_parse_packet(self, packet):
-        """
-        Parses the MMS packet
-        """
+        """Parses the MMS packet."""
 
         # packet.dump()
         start = packet.get_bytes(4)[::-1]
-        signature = packet.get_bytes(4)[::-1]
-        cmd_length = Utils.str2num(packet.get_bytes(4)[::-1])
+        cmd_length = utils.str2num(packet.get_bytes(4)[::-1])
         proto_type = packet.get_bytes(4)
 
         if start != self.MMS_COMMAND_START or proto_type != self.MMS_PROTO:
             return None
 
         packet.get_bytes(4)  # skip first LEN_to_END
-        seq_number = Utils.str2num(packet.get_bytes(4)[::-1])
-        timestamp = Utils.str2num(packet.get_bytes(8)[::-1])
 
         packet.get_bytes(4)  # skip second LEN_to_END
         mms_cmd_type = packet.get_bytes(2)[::-1]
@@ -85,13 +84,11 @@ class MMSParser(object):
         # Only care about connect info and request file command sent to server
         if mms_direction != self.MMS_DIRECTION_TO_SERVER or \
                 mms_cmd_type not in [
-                    self.MMS_COMMAND_CONNECT_INFO, self.MMS_COMMAND_REQUEST_SERVER_FILE]:
+                    self.MMS_COMMAND_CONNECT_INFO,
+                    self.MMS_COMMAND_REQUEST_SERVER_FILE]:
             logger.debug("Irrelative command %s in direction %s, skipping",
                          repr(mms_cmd_type), repr(mms_direction))
             return None
-
-        prefix_1 = packet.get_bytes(4)[::-1]
-        prefix_2 = packet.get_bytes(4)[::-1]
 
         if cmd_length <= 32:
             return None
@@ -104,7 +101,7 @@ class MMSParser(object):
             packet.get_bytes(4)    # skip 4 bytes, unknown
             while packet.have_bytes():
                 data += unichr(
-                    Utils.str2num(packet.get_bytes(2)[::-1])).encode('utf-8')
+                    utils.str2num(packet.get_bytes(2)[::-1])).encode('utf-8')
             data = data.rstrip('\x00')
             data = data.split('; ')
             for i in data:
@@ -115,7 +112,7 @@ class MMSParser(object):
             packet.get_bytes(8)    # skip 8 bytes, usually 8 zeros
             while packet.have_bytes():
                 data += unichr(
-                    Utils.str2num(packet.get_bytes(2)[::-1])).encode('utf-8')
+                    utils.str2num(packet.get_bytes(2)[::-1])).encode('utf-8')
             mms_cmd.args['server_file'] = data.rstrip('\x00')
 
         logger.debug("Got data %s", repr(mms_cmd.args))

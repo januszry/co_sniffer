@@ -1,7 +1,8 @@
 #!/usr/bin/env python2.7
 
+
 def str2num(s):
-    ''' Convert a number to a chr '''
+    """Convert a number to a chr."""
 
     i = 0
     l = 0
