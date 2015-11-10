@@ -170,8 +170,8 @@ def packet_handler(pkt):
                 if mms_streams[session_id]['cmds'].count() == 2:
                     logger.info('MMSP stream found')
                     result.append(
-                            ('mms',
-                             mms_streams[session_id]['cmds'].output('txt')))
+                        ('mms',
+                         mms_streams[session_id]['cmds'].output('txt')))
                     mms_streams[session_id]['dont_scan_again'] = True
                     found = True
             except StreamNoMoreBytes:
@@ -218,9 +218,9 @@ def packet_handler(pkt):
                             else:
                                 logger.info('HTTP stream found')
                                 result.append(
-                                        ('http',
-                                         http_streams[rsession_id]['cmds'].
-                                         output('txt')))
+                                    ('http',
+                                     http_streams[rsession_id]['cmds'].
+                                     output('txt')))
                                 http_streams[
                                     rsession_id]['dont_scan_again'] = True
                                 found = True
