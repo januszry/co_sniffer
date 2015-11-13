@@ -13,16 +13,18 @@ from scapy.layers.inet import TCP, IP
 from scapy.packet import Raw
 from scapy.sendrecv import sniff as _sniff
 
-from lib.stream import Stream, StreamNoMoreBytes
-from lib.rtmpparser import RTMPParser
-from lib.mmsparser import MMSParser
-from lib.mmscommand import MMSCommands
-from lib.wmspparser import WMSPParser
-from lib.wmspcommand import WMSPCommands
-from lib.rtspparser import RTSPParser
-from lib.rtspcommand import RTSPCommands
-from lib.httpparser import HTTPParser
-from lib.httpcommand import HTTPCommands
+from .lib.stream import Stream, StreamNoMoreBytes
+from .lib.rtmpparser import RTMPParser
+from .lib.mmsparser import MMSParser
+from .lib.mmscommand import MMSCommands
+from .lib.wmspparser import WMSPParser
+from .lib.wmspcommand import WMSPCommands
+from .lib.rtspparser import RTSPParser
+from .lib.rtspcommand import RTSPCommands
+from .lib.httpparser import HTTPParser
+from .lib.httpcommand import HTTPCommands
+
+
 local_ips = []
 sessions = {}
 # Session here is different from session in RFC: Only one direction, i.e.
@@ -34,7 +36,6 @@ SNIFF_WMSP = True
 SNIFF_RTSP = True
 SNIFF_HTTP = True
 SNIFF_TIMEOUT = 1800
-SNIFF_RESULT_FILE = os.path.join('/tmp', 'sniffed.pickle')
 RELEASE_TIMEOUT = 10
 
 rtmp_streams = {}
@@ -46,6 +47,8 @@ http_streams = {}
 out_mode = 'txt'
 quit_first = False
 result = []
+
+sniff_result_file = None
 
 
 def reverse_session_id(session_id):
@@ -284,7 +287,7 @@ def packet_handler(pkt):
                 logger.debug("Removed rtsp session %s", repr(session_id))
 
         if found:
-            with open(SNIFF_RESULT_FILE, 'wb') as fd:
+            with open(sniff_result_file, 'wb') as fd:
                 pickle.dump(result, fd)
 
     if quit_first and found:
@@ -297,6 +300,10 @@ def setup_arg_parser():
     parser.add_argument(
         "-t", "--timeout", action="store", dest="timeout",
         default=SNIFF_TIMEOUT, help="Timeout diff from default")
+    parser.add_argument("--tmp_dir", default='/tmp')
+    parser.add_argument("--result_pickle", default='qtsniffer.pickle')
+    parser.add_argument("--log_dir", default='/tmp')
+    parser.add_argument("--log_file", default='qtsniffer.log')
 
     group_input = parser.add_argument_group("Input")
     group = group_input.add_mutually_exclusive_group()
@@ -361,22 +368,27 @@ def sniff(pcapfile=None, device=None, timeout=SNIFF_TIMEOUT):
             exit(1)
 
 
-if __name__ == "__main__":
+def main():
+    args = setup_arg_parser()
 
-    log_file = os.path.join('/tmp', 'sniffer.log')
-    log_format = "[%(levelname)s]<%(module)s>-%(funcName)s: \
-%(message)s --- %(asctime)s"
+    log_format = "[%(levelname)s]<%(module)s>-%(funcName)s:"
+    log_format += " %(message)s --- %(asctime)s"
     log_formatter = logging.Formatter(log_format)
-    logfile_handler = logging.FileHandler(log_file)
-    logfile_handler.setFormatter(log_formatter)
+
+    logger = logging.getLogger()
+    if os.path.isdir(args.log_dir):
+        logfile = os.path.join(args.log_dir, args.log_file)
+        logfile_handler = logging.FileHandler(logfile)
+        logfile_handler.setFormatter(log_formatter)
+        logger.addHandler(logfile_handler)
+    else:
+        print("Specified log_dir %s not exists, only write to stderr")
+
     logstream_handler = logging.StreamHandler()
     logstream_handler.setFormatter(log_formatter)
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logfile_handler)
-    logger.addHandler(logstream_handler)
 
-    args = setup_arg_parser()
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logstream_handler)
 
     if args.debug:
         logger.setLevel(logging.DEBUG)
@@ -389,8 +401,16 @@ if __name__ == "__main__":
     logger.info("Local ips: %s", local_ips)
 
     # listen_port = args.port
+    global out_mode, quit_first
     out_mode = args.out_mode
     quit_first = args.quit_first
 
+    global sniff_result_file
+    sniff_result_file = os.path.join(args.tmp_dir, args.result_pickle)
+
     logger.info("Packet Sniffer")
     sniff(args.pcapfile, args.device, int(args.timeout))
+
+
+if __name__ == '__main__':
+    main()
