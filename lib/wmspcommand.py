@@ -1,7 +1,9 @@
+import traceback
+
 from .commands import Commands
 
 
-class WMSPCommand():
+class WMSPCommand(object):
 
     def __init__(self):
         self.name = ""
@@ -27,5 +29,6 @@ class WMSPCommands(Commands):
                 self.stream_info["host"] + self.stream_info["path"]
             self.add_port()
 
-        except Exception as e:
-            self._logger.error("Error parsing WMSP properties: %s", e)
+        except:
+            self._logger.error("Error parsing WMSP properties: %s",
+                               traceback.format_exc())
