@@ -14,6 +14,8 @@ class HTTPParser(object):
         if not method or method.upper() not in ['GET', 'HTT', 'ICY']:
             return None
         data = convert_bytes_to_str(packet.get_bytes(packet.size))
+        if not data:
+            return
         data = data.split('\r\n\r\n')[0].split('\r\n')
 
         http_cmd = HTTPCommand()
