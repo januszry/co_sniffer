@@ -1,10 +1,9 @@
-import sys
 import struct
 import logging
 
 # from scapy.utils import hexdump
 
-from .utils import str2num, bytechr
+from .utils import str2num, bytechr, convert_bytes_to_str
 from .stream import Stream
 from .amfcommand import AMFCommand, AMFCommands
 
@@ -212,9 +211,7 @@ class RTMPParser(object):
         # STRING
         if b == self.AMF_STRING:
             strlen = str2num(p.get_bytes(2))
-            string = p.get_bytes(strlen)
-            if sys.version_info.major == 3:
-                string = string.decode()
+            string = convert_bytes_to_str(p.get_bytes(strlen))
             self._logger.debug("Found a string [%s]...", string)
             return string
 
@@ -242,9 +239,7 @@ class RTMPParser(object):
 
                 # Property name
                 strlen = str2num(p.get_bytes(2))
-                key = p.get_bytes(strlen)
-                if sys.version_info.major == 3:
-                    key = key.decode()
+                key = convert_bytes_to_str(p.get_bytes(strlen))
                 self._logger.debug("Property name [%s]...", key)
 
                 # Property value

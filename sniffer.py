@@ -227,7 +227,7 @@ def packet_handler(pkt):
             except StreamNoMoreBytes:
                 logger.debug("Not http command packet, continue")
             except Exception as e:
-                logger.error("HTTP Parser Error: %s", e)
+                logger.error("HTTP Parser Error: %s", traceback.format_exc())
 
         '''Only ONE Packet from Client to Server is Needed'''
         if SNIFF_WMSP:

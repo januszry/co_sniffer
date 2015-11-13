@@ -24,3 +24,16 @@ def bytechr(i):
         return bytes([i])
     else:
         return chr(i)
+
+
+def convert_bytes_to_str(s, encoding='utf-8'):
+    if isinstance(s, str):
+        return s
+    elif isinstance(s, bytes):
+        if sys.version_info.major == 3:
+            try:
+                return s.decode(encoding)
+            except UnicodeDecodeError:
+                return
+        else:
+            return s

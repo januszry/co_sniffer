@@ -1,3 +1,4 @@
+from .utils import convert_bytes_to_str
 from .httpcommand import HTTPCommand
 
 
@@ -9,10 +10,11 @@ class HTTPParser(object):
     def http_parse_packet(self, packet):
         """Parses the HTTP packet."""
 
-        method = packet.read_bytes(3).upper()
-        if method != 'GET' and method != 'HTT' and method != 'ICY':
+        method = convert_bytes_to_str(packet.read_bytes(3))
+        if not method or method.upper() not in ['GET', 'HTT', 'ICY']:
             return None
-        data = packet.get_bytes(packet.size).split('\r\n\r\n')[0].split('\r\n')
+        data = convert_bytes_to_str(packet.get_bytes(packet.size))
+        data = data.split('\r\n\r\n')[0].split('\r\n')
 
         http_cmd = HTTPCommand()
         if method == 'GET':
