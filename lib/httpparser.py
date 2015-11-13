@@ -43,6 +43,8 @@ class HTTPParser(object):
                 'content-type:application/x-mpegurl',
                 'content-type: application/flv',
                 'content-type:application/flv',
+                'content-type: application/ogg',
+                'content-type:application/ogg',
                 'content-type: flv-application/octet-stream',
                 'content-type:flv-application/octet-stream']
             http_cmd.name = 'STREAM_RESP'
