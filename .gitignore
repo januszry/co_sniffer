@@ -2,3 +2,6 @@ lib/*.pyc
 lib/__pycache__/*
 sniffed.pickle
 sniffer.log
+src/build/*
+src/dist/*
+src/qtsniffer.egg-info/*
