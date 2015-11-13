@@ -1,9 +1,7 @@
-#!/usr/bin/env python2.7
-
 import logging
-import utils
-from mmscommand import MMSCommand
-logger = logging.getLogger(__name__)
+
+from . import utils
+from .mmscommand import MMSCommand
 
 
 class MMSParser(object):
@@ -60,7 +58,7 @@ class MMSParser(object):
     MMS_ERROR_CODE_OK = '\x00\x00\x00\x00'
 
     def __init__(self):
-        pass
+        self._logger = logging.getLogger(__name__)
 
     def mms_parse_packet(self, packet):
         """Parses the MMS packet."""
@@ -78,7 +76,7 @@ class MMSParser(object):
         packet.get_bytes(4)  # skip second LEN_to_END
         mms_cmd_type = packet.get_bytes(2)[::-1]
         mms_direction = packet.get_bytes(2)[::-1]
-        logger.debug("Got command %s in direction %s", repr(
+        self._logger.debug("Got command %s in direction %s", repr(
             mms_cmd_type), repr(mms_direction))
 
         # Only care about connect info and request file command sent to server
@@ -86,8 +84,9 @@ class MMSParser(object):
                 mms_cmd_type not in [
                     self.MMS_COMMAND_CONNECT_INFO,
                     self.MMS_COMMAND_REQUEST_SERVER_FILE]:
-            logger.debug("Irrelative command %s in direction %s, skipping",
-                         repr(mms_cmd_type), repr(mms_direction))
+            self._logger.debug(
+                "Irrelative command %s in direction %s, skipping",
+                repr(mms_cmd_type), repr(mms_direction))
             return None
 
         if cmd_length <= 32:
@@ -100,7 +99,7 @@ class MMSParser(object):
             mms_cmd.name = 'connect_info'
             packet.get_bytes(4)    # skip 4 bytes, unknown
             while packet.have_bytes():
-                data += unichr(
+                data += chr(
                     utils.str2num(packet.get_bytes(2)[::-1])).encode('utf-8')
             data = data.rstrip('\x00')
             data = data.split('; ')
@@ -111,10 +110,10 @@ class MMSParser(object):
             mms_cmd.name = 'request_server_file'
             packet.get_bytes(8)    # skip 8 bytes, usually 8 zeros
             while packet.have_bytes():
-                data += unichr(
+                data += chr(
                     utils.str2num(packet.get_bytes(2)[::-1])).encode('utf-8')
             mms_cmd.args['server_file'] = data.rstrip('\x00')
 
-        logger.debug("Got data %s", repr(mms_cmd.args))
+        self._logger.debug("Got data %s", repr(mms_cmd.args))
 
         return mms_cmd

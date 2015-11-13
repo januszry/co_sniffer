@@ -1,6 +1,4 @@
-#!/usr/bin/env python2.7
-
-from wmspcommand import WMSPCommand
+from .wmspcommand import WMSPCommand
 
 
 class WMSPParser(object):

@@ -1,7 +1,9 @@
-#!/usr/bin/env python2.7
+import logging
 
-
-import urlparse
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 DELIMITER = "*" * 80
 
@@ -12,6 +14,7 @@ class Commands(object):
         self.commands = []
         self.stream_info = {}
         self.default_port = None
+        self._logger = logging.getLogger(__name__)
 
     def __str__(self):
         result = 'Commands:\n' + DELIMITER + '\n'
@@ -63,9 +66,9 @@ class Commands(object):
         self.parse()
         if mode == 'txt':
             result = self.output_txt()
-            print DELIMITER
-            print result
-            print DELIMITER
+            print(DELIMITER)
+            print(result)
+            print(DELIMITER)
             return result
 
     def output_txt(self):

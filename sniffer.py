@@ -5,7 +5,7 @@ import logging
 import argparse
 import traceback
 import time
-import cPickle as pickle
+import pickle
 import socket
 
 import netifaces
@@ -95,7 +95,7 @@ def packet_handler(pkt):
         '''Payloads of Several Packets are Concatenated into One Stream'''
         if SNIFF_RTMP:
             # Clear old cached sessions to release memory
-            all_sessions = rtmp_streams.keys()
+            all_sessions = list(rtmp_streams.keys())
             for i in all_sessions:
                 if time.time() - rtmp_streams[i].timestamp >= RELEASE_TIMEOUT:
                     del rtmp_streams[i]
@@ -144,7 +144,7 @@ def packet_handler(pkt):
         if SNIFF_MMSP:
             # mms command cannot be chunked, so there is no need to concatenate
             # packet data
-            all_sessions = mms_streams.keys()
+            all_sessions = list(mms_streams.keys())
             for i in all_sessions:
                 if time.time() - mms_streams[i]['timestamp'] \
                         >= RELEASE_TIMEOUT:
@@ -181,7 +181,7 @@ def packet_handler(pkt):
 
         '''Several Packets are Parsed and Thrown Away'''
         if SNIFF_HTTP:
-            all_sessions = http_streams.keys()
+            all_sessions = list(http_streams.keys())
             for i in all_sessions:
                 if time.time() - http_streams[i]['timestamp'] \
                         >= RELEASE_TIMEOUT:

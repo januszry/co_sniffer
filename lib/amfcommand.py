@@ -1,14 +1,9 @@
-#!/usr/bin/env python2.7
-
-
 import traceback
-import logging
-from commands import Commands, DELIMITER
 
-logger = logging.getLogger(__name__)
+from .commands import Commands, DELIMITER
 
 
-class AMFCommand():
+class AMFCommand(object):
 
     def __init__(self):
         self.name = ''
@@ -27,7 +22,7 @@ class AMFCommands(Commands):
         self.default_port = '1935'
 
     def parse(self):
-        ''' Prints the amf command object '''
+        """Prints the amf command object."""
         try:
             # CMD connect
             cmd = self.get('connect')
@@ -63,7 +58,7 @@ class AMFCommands(Commands):
                 self.add_port()
 
         except Exception as e:
-            logger.error("Error parsing RTMP properties: %s", e)
+            self._logger.error("Error parsing RTMP properties: %s", e)
             traceback.print_exc()
 
     def output(self, mode='txt'):
@@ -75,9 +70,9 @@ class AMFCommands(Commands):
             result = self.output_rtmpdump()
         else:
             result = self.output_txt()
-        print DELIMITER
-        print result
-        print DELIMITER
+        print(DELIMITER)
+        print(result)
+        print(DELIMITER)
         return result
 
     def output_txt(self):

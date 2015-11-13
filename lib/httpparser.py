@@ -1,6 +1,4 @@
-#!/usr/bin/env python2.7
-
-from httpcommand import HTTPCommand
+from .httpcommand import HTTPCommand
 
 
 class HTTPParser(object):

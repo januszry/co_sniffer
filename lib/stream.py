@@ -1,11 +1,9 @@
-#!/usr/bin/env python2.7
-
 from scapy.utils import hexdump
 
 
 class Stream(object):
 
-    def __init__(self, stream=""):
+    def __init__(self, stream=b""):
         self.stream = stream
         self.offset = 0
         self.size = len(stream)

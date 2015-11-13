@@ -1,31 +1,32 @@
-#!/usr/bin/env python2.7
-
+import sys
 import struct
 import logging
-import utils
-from stream import Stream
-from amfcommand import AMFCommand, AMFCommands
-logger = logging.getLogger(__name__)
+
+# from scapy.utils import hexdump
+
+from .utils import str2num, bytechr
+from .stream import Stream
+from .amfcommand import AMFCommand, AMFCommands
 
 
-class RTMPParser():
+class RTMPParser(object):
 
     AMF0_COMMAND = 0x14
     AMF3_COMMAND = 0x11
 
-    AMF_STRING = chr(0x02)
-    AMF_NUMBER = chr(0x00)
-    AMF_OBJECT = chr(0x03)
-    AMF_BOOLEAN = chr(0x01)
-    AMF_NULL = chr(0x05)
-    AMF_ARRAY = chr(0x08)
+    AMF_STRING = bytechr(0x02)
+    AMF_NUMBER = bytechr(0x00)
+    AMF_OBJECT = bytechr(0x03)
+    AMF_BOOLEAN = bytechr(0x01)
+    AMF_NULL = bytechr(0x05)
+    AMF_ARRAY = bytechr(0x08)
 
     chunk_para = {}
     # Record parameter for each chunk stream id so that Type 2 b10 and Type
     # 3 b11 chunks can be processed
 
     def __init__(self):
-        pass
+        self._logger = logging.getLogger(__name__)
 
     def rtmp_parse_stream(self, stream):
         """
@@ -40,7 +41,8 @@ class RTMPParser():
         H1_rndData = stream.get_bytes(0x600)  # 1536
         H2_rndData = stream.get_bytes(0x600)
 
-        if H1 != chr(0x03) or H1_rndData is None or H2_rndData is None:
+        if H1 != bytechr(0x03) or \
+                H1_rndData is None or H2_rndData is None:
             return cmds
 
         # hexdump(stream.stream)
@@ -80,24 +82,24 @@ class RTMPParser():
 
         # Header type b00
         if header_type == 0:
-            utils.str2num(stream.get_bytes(3))  # timestamp
-            body_size = utils.str2num(stream.get_bytes(3))
+            str2num(stream.get_bytes(3))  # timestamp
+            body_size = str2num(stream.get_bytes(3))
             packet_type = stream.get_byte()
-            utils.str2num(stream.get_bytes(4))  # stream_id
+            str2num(stream.get_bytes(4))  # stream_id
             self.chunk_para[chunk_stream_id]['length'] = body_size
             self.chunk_para[chunk_stream_id]['packet_type'] = packet_type
 
         # Header type b01
         elif header_type == 1:
-            utils.str2num(stream.get_bytes(3))  # timestamp
-            body_size = utils.str2num(stream.get_bytes(3))
+            str2num(stream.get_bytes(3))  # timestamp
+            body_size = str2num(stream.get_bytes(3))
             packet_type = stream.get_byte()
             self.chunk_para[chunk_stream_id]['length'] = body_size
             self.chunk_para[chunk_stream_id]['packet_type'] = packet_type
 
         # Header type b10
         elif header_type == 2:
-            utils.str2num(stream.get_bytes(3))  # timestamp
+            str2num(stream.get_bytes(3))  # timestamp
             if chunk_stream_id not in self.chunk_para:
                 stream.offset = stream.size
                 return None
@@ -119,18 +121,20 @@ class RTMPParser():
                 return None
 
         else:
-            logger.error("RTMP header type not supported: %d", header_type)
+            self._logger.error(
+                "RTMP header type not supported: %d", header_type)
             return None
 
         # print type(packet_type), packet_type, self.AMF0_COMMAND,
         # self.AMF3_COMMAND
 
-        logger.debug("Start parsing packet with length %d from offset %d",
-                     body_size, stream.offset)
+        self._logger.debug(
+            "Start parsing packet with length %d from offset %d",
+            body_size, stream.offset)
 
         # Read RTMP payload from the stream
         magic_byte = 0xC0 + chunk_stream_id
-        magic_bytes_count = body_size / 128
+        magic_bytes_count = body_size // 128
         rtmp_payload = stream.get_bytes(body_size + magic_bytes_count)
 
         if rtmp_payload is None:
@@ -140,10 +144,11 @@ class RTMPParser():
         n = 0
         while (n < len(rtmp_payload)):
             if (n % 128 == 0) and (n != 0):
-                if magic_byte < 256 and rtmp_payload[n] == chr(magic_byte):
+                if magic_byte < 256 and \
+                        bytechr(rtmp_payload[n]) == bytechr(magic_byte):
                     rtmp_payload = rtmp_payload[:n] + rtmp_payload[n + 1:]
                 else:
-                    logger.debug(
+                    self._logger.debug(
                         "Expected RTMP magic byte %x "
                         "not found in the payload[%d] %s",
                         magic_byte, n, rtmp_payload[n])
@@ -180,7 +185,7 @@ class RTMPParser():
 
             # Interested only in "connect" and "play" objects
             if cmd.name not in ["connect", "play"]:
-                logger.debug("Skip irrelative command: %s", cmd.name)
+                self._logger.debug("Skip irrelative command: %s", cmd.name)
                 return None
 
             # Read AMF Transaction ID
@@ -194,49 +199,53 @@ class RTMPParser():
 
         # Discard otherwise
         else:
-            logger.debug("Skip irrelative packet type: %s", packet_type)
+            self._logger.debug("Skip irrelative packet type: %s", packet_type)
 
         return None
 
     def rtmp_parse_object(self, p):
-        ''' Parse a single RTMP object '''
+        """Parse a single RTMP object."""
 
         # Object type
         b = p.get_bytes(1)
 
         # STRING
         if b == self.AMF_STRING:
-            strlen = utils.str2num(p.get_bytes(2))
+            strlen = str2num(p.get_bytes(2))
             string = p.get_bytes(strlen)
-            logger.debug("Found a string [%s]..." % string)
+            if sys.version_info.major == 3:
+                string = string.decode()
+            self._logger.debug("Found a string [%s]...", string)
             return string
 
         # NUMBER
         # Numbers are stored as 8 byte (big endian) float double
         elif b == self.AMF_NUMBER:
             number = struct.unpack('>d', p.get_bytes(8))
-            logger.debug("Found a number [%d]..." % number)
+            self._logger.debug("Found a number [%d]...", number)
             return int(number[0])
 
         # BOOLEAN
         elif b == self.AMF_BOOLEAN:
-            boolean = False if (p.get_bytes(1) == chr(0)) else True
-            logger.debug("Found a boolean (%s)..." % boolean)
+            boolean = False if (p.get_bytes(1) == bytechr(0)) else True
+            self._logger.debug("Found a boolean (%s)...", boolean)
             return boolean
 
         # OBJECT
         elif b == self.AMF_OBJECT:
-            logger.debug("Found an object...")
+            self._logger.debug("Found an object...")
             obj = dict()
 
             # Reading all the object properties, until End Of Object marker is
             # reached
-            while (p.read_bytes(3) != "\x00\x00\x09"):
+            while (p.read_bytes(3) != b"\x00\x00\x09"):
 
                 # Property name
-                strlen = utils.str2num(p.get_bytes(2))
+                strlen = str2num(p.get_bytes(2))
                 key = p.get_bytes(strlen)
-                logger.debug("Property name [%s]...", key)
+                if sys.version_info.major == 3:
+                    key = key.decode()
+                self._logger.debug("Property name [%s]...", key)
 
                 # Property value
                 val = self.rtmp_parse_object(p)
@@ -250,20 +259,20 @@ class RTMPParser():
 
         # NULL
         elif b == self.AMF_NULL:
-            logger.debug("Found a NULL byte...")
+            self._logger.debug("Found a NULL byte...")
             return None
 
         # ARRAY
         # don't care
         elif b == self.AMF_ARRAY:
-            utils.str2num(p.get_bytes(4))  # arraylen
-            logger.debug("Found an array...")
-            while p.read_bytes(3) != "\x00\x00\x09":
+            str2num(p.get_bytes(4))  # arraylen
+            self._logger.debug("Found an array...")
+            while p.read_bytes(3) != b"\x00\x00\x09":
                 pass
             p.get_bytes(3)
             return 0
 
         # Unknown object
         else:
-            logger.error("Found an unknown RTMP object: 0x%x", ord(b))
+            self._logger.error("Found an unknown RTMP object: 0x%x", ord(b))
             return None

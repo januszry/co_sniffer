@@ -1,8 +1,4 @@
-#!/usr/bin/env python2.7
-
-import logging
-from commands import Commands
-logger = logging.getLogger(__name__)
+from .commands import Commands
 
 
 class RTSPCommand():
@@ -29,4 +25,4 @@ class RTSPCommands(Commands):
             self.add_port()
 
         except Exception as e:
-            logger.error("Error parsing RTSP properties: %s", e)
+            self._logger.error("Error parsing RTSP properties: %s", e)

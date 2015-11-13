@@ -1,6 +1,4 @@
-#!/usr/bin/env python2.7
-
-from rtspcommand import RTSPCommand
+from .rtspcommand import RTSPCommand
 
 
 class RTSPParser(object):

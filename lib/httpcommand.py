@@ -1,11 +1,7 @@
-#!/usr/bin/env python2.7
-
-import logging
-from commands import Commands
-logger = logging.getLogger(__name__)
+from .commands import Commands
 
 
-class HTTPCommand():
+class HTTPCommand(object):
 
     def __init__(self):
         self.name = ""
@@ -34,4 +30,4 @@ class HTTPCommands(Commands):
             self.add_port()
 
         except Exception as e:
-            logger.error("Error parsing HTTP properties: %s", e)
+            self._logger.error("Error parsing HTTP properties: %s", e)
