@@ -28,11 +28,11 @@ sessions = {}
 # Session here is different from session in RFC: Only one direction, i.e.
 # A -> B and B -> A are 2 sessions
 
-SNIFF_RTMP = True
+SNIFF_RTMP = False
 SNIFF_MMSP = True
-SNIFF_WMSP = True
-SNIFF_RTSP = True
-SNIFF_HTTP = True
+SNIFF_WMSP = False
+SNIFF_RTSP = False
+SNIFF_HTTP = False
 SNIFF_TIMEOUT = 1800
 SNIFF_RESULT_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                  'sniffed.pickle')
@@ -176,8 +176,8 @@ def packet_handler(pkt):
                     found = True
             except StreamNoMoreBytes:
                 logger.debug("Not mms command packet, continue")
-            except Exception as e:
-                logger.error("MMS Parser Error: %s", e)
+            except:
+                logger.error("MMS Parser Error: %s", traceback.format_exc())
 
         '''Several Packets are Parsed and Thrown Away'''
         if SNIFF_HTTP:
