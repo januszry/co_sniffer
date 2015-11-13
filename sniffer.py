@@ -28,14 +28,13 @@ sessions = {}
 # Session here is different from session in RFC: Only one direction, i.e.
 # A -> B and B -> A are 2 sessions
 
-SNIFF_RTMP = False
+SNIFF_RTMP = True
 SNIFF_MMSP = True
-SNIFF_WMSP = False
-SNIFF_RTSP = False
-SNIFF_HTTP = False
+SNIFF_WMSP = True
+SNIFF_RTSP = True
+SNIFF_HTTP = True
 SNIFF_TIMEOUT = 1800
-SNIFF_RESULT_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                 'sniffed.pickle')
+SNIFF_RESULT_FILE = os.path.join('/tmp', 'sniffed.pickle')
 RELEASE_TIMEOUT = 10
 
 rtmp_streams = {}
@@ -364,8 +363,7 @@ def sniff(pcapfile=None, device=None, timeout=SNIFF_TIMEOUT):
 
 if __name__ == "__main__":
 
-    log_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                            'sniffer.log')
+    log_file = os.path.join('/tmp', 'sniffer.log')
     log_format = "[%(levelname)s]<%(module)s>-%(funcName)s: \
 %(message)s --- %(asctime)s"
     log_formatter = logging.Formatter(log_format)

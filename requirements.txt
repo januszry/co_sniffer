@@ -1,4 +1,1 @@
-pcap>=1.1
-pypcap>=1.1.1
-scapy>=2.1.0
-dnet-real>=1.12
+scapy-python3>=0.16
