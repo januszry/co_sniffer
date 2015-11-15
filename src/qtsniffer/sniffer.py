@@ -25,7 +25,7 @@ from .lib.httpparser import HTTPParser
 from .lib.httpcommand import HTTPCommands
 
 
-local_ips = []
+all_devices = {}
 sessions = {}
 # Session here is different from session in RFC: Only one direction, i.e.
 # A -> B and B -> A are 2 sessions
@@ -358,15 +358,6 @@ def sniff(pcapfile=None, device=None, timeout=SNIFF_TIMEOUT):
             logger.error("Error opening %s for sniffing: %s", (device, e))
             exit(1)
 
-    # Default action, sniffing on all the devices
-    else:
-        logger.info("Starting sniffing on all devices")
-        try:
-            _sniff(store=0, prn=packet_handler, timeout=timeout)
-        except socket.error as e:
-            logger.error("Error opening device for sniffing: %s", e)
-            exit(1)
-
 
 def main():
     args = setup_arg_parser()
@@ -393,12 +384,7 @@ def main():
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    for ifacename in netifaces.interfaces():
-        addrs = netifaces.ifaddresses(ifacename)
-        if netifaces.AF_INET in addrs:
-            for i in addrs[netifaces.AF_INET]:
-                local_ips.append(i['addr'])
-    logger.info("Local ips: %s", local_ips)
+    logger.info('-' * 20 + " Stream Sniffer " + '-' * 20)
 
     # listen_port = args.port
     global out_mode, quit_first
@@ -408,8 +394,25 @@ def main():
     global sniff_result_file
     sniff_result_file = os.path.join(args.tmp_dir, args.result_pickle)
 
-    logger.info("Packet Sniffer")
-    sniff(args.pcapfile, args.device, int(args.timeout))
+    if args.pcapfile:
+        sniffed_device = None
+    else:
+        if args.device:
+            sniffed_device = args.device
+        else:
+            for ifacename in netifaces.interfaces():
+                addrs = netifaces.ifaddresses(ifacename)
+                if netifaces.AF_INET in addrs:
+                    if ifacename not in all_devices:
+                        all_devices[ifacename] = []
+                    for i in addrs[netifaces.AF_INET]:
+                        all_devices[ifacename].append(i['addr'])
+            logger.debug("Available devices: %s", all_devices)
+            sniffable_devices = [i for i in all_devices
+                                 if '127.0.0.1' not in all_devices[i]]
+            sniffed_device = sniffable_devices[0]
+
+    sniff(args.pcapfile, sniffed_device, int(args.timeout))
 
 
 if __name__ == '__main__':
