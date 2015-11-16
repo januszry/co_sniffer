@@ -62,11 +62,9 @@ class AMFCommands(Commands):
             traceback.print_exc()
 
     def output(self, mode='txt'):
-        ''' Output found stream in specified mode '''
+        """Output found stream in specified mode."""
 
-        if mode == 'm3u':
-            result = self.output_m3u()
-        elif mode == 'rtmpdump':
+        if mode == 'rtmpdump':
             result = self.output_rtmpdump()
         else:
             result = self.output_txt()
@@ -76,7 +74,7 @@ class AMFCommands(Commands):
         return result
 
     def output_txt(self):
-        ''' Get plain text of stream properties '''
+        """Get plain text of stream properties."""
 
         result = [self.stream_info['url']]
         for p in ['app', 'pageUrl', 'swfUrl', 'tcUrl', 'playPath', 'extra']:
@@ -85,27 +83,8 @@ class AMFCommands(Commands):
 
         return ' '.join(result)
 
-    def output_m3u(self):
-        ''' Get m3u text of stream properties '''
-
-        result = []
-        result.append('#EXTINF:0,1, Stream')
-
-        paras = [self.stream_info['url']]
-        for p in ['app', 'pageUrl', 'swfUrl', 'tcUrl', 'playPath']:
-            if p in self.stream_info:
-                paras.append("{}={}".format(p, self.stream_info[p]))
-        if 'extra' in self.stream_info:
-            paras.append("conn={}".format(self.stream_info['extra']))
-        paras.append('live=1')
-
-        result.append(' '.join(paras))
-
-        result = '\n'.join(result)
-        return result
-
     def output_rtmpdump(self):
-        ''' Get rtmpdump text of stream properties '''
+        """Get rtmpdump text of stream properties."""
 
         result = []
 
@@ -122,8 +101,6 @@ class AMFCommands(Commands):
             paras.extend(['-p', self.stream_info['pageUrl']])
         if self.stream_info.get('flashVer', None):
             paras.extend(['-f', self.stream_info['flashVer']])
-        if self.stream_info.get('extra', None):
-            paras.extend(['-C', self.stream_info['extra']])
         paras.extend(['--live', '-o', 'output.flv'])
 
         result.append(' '.join(paras))

@@ -44,7 +44,7 @@ wmsp_streams = {}
 rtsp_streams = {}
 http_streams = {}
 
-out_mode = 'txt'
+rtmp_out_mode = 'txt'
 quit_first = False
 result = []
 
@@ -67,7 +67,7 @@ def packet_handler(pkt):
     global wmsp_streams
     global rtsp_streams
     global http_streams
-    global out_mode
+    global rtmp_out_mode
     global quit_first
     global sessions
     global result
@@ -124,7 +124,7 @@ def packet_handler(pkt):
                     # results
                     if cmds is not None and 'url' in cmds.stream_info:
                         logger.info("RTMP stream found")
-                        result.append(('rtmp', cmds.output(out_mode)))
+                        result.append(('rtmp', cmds.output(rtmp_out_mode)))
                         rtmp_streams[session_id].dont_scan_again = True
                         rtmp_streams[session_id].offset = 0
                         found = True
@@ -316,14 +316,9 @@ def setup_arg_parser():
     group_output = parser.add_argument_group("Output format")
     group = group_output.add_mutually_exclusive_group()
     group.add_argument(
-        "--out-list", action='store_const', const="list", dest="out_mode",
-        help="Prints the RTMP data as list (Default)")
-    group.add_argument(
-        "--out-m3u", action='store_const', const="m3u", dest="out_mode",
-        help="Prints the RTMP data as m3u entry")
-    group.add_argument(
         "--out-rtmpdump", action='store_const', const="rtmpdump",
-        dest="out_mode", help="Prints the RTMP data in the rtmpdump format")
+        dest="rtmp_out_mode",
+        help="Prints the RTMP data in the rtmpdump format")
 
     group_input = parser.add_argument_group("Additional options")
     # group_input.add_argument("-p", action="store", dest="port", default=0,
@@ -387,8 +382,8 @@ def main():
     logger.info('-' * 20 + " Stream Sniffer " + '-' * 20)
 
     # listen_port = args.port
-    global out_mode, quit_first
-    out_mode = args.out_mode
+    global rtmp_out_mode, quit_first
+    rtmp_out_mode = args.rtmp_out_mode
     quit_first = args.quit_first
 
     global sniff_result_file
