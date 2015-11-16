@@ -31,3 +31,12 @@ class HTTPCommands(Commands):
 
         except Exception as e:
             self._logger.error("Error parsing HTTP properties: %s", e)
+
+    def output_txt(self):
+        """Get plain text of stream properties."""
+        result = [self.stream_info['url']]
+        for k, v in self.stream_info.items():
+            if k in ['user-agent', 'referer']:
+                result.append("{}: {}".format(k, v))
+
+        return '\n'.join(result)
