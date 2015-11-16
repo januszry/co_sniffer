@@ -1,7 +1,7 @@
-lib/*.pyc
-lib/__pycache__/*
-sniffed.pickle
-sniffer.log
+src/qtsniffer/*.pyc
+src/qtsniffer/__pycache__/*
+src/qtsniffer/lib/*.pyc
+src/qtsniffer/lib/__pycache__/*
 src/build/*
 src/dist/*
 src/qtsniffer.egg-info/*
