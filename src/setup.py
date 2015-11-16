@@ -11,7 +11,7 @@ else:
 
 setup(
     name='qtsniffer',
-    version='0.2.2',
+    version='0.2.3',
     keywords=('sniff', 'packet', 'streaming', 'wmsp', 'mms', 'rtmp'),
     description='Media stream sniffer based on scapy-python3',
     license='MIT License',

@@ -219,7 +219,7 @@ class RTMPParser(object):
         # Numbers are stored as 8 byte (big endian) float double
         elif b == self.AMF_NUMBER:
             number = struct.unpack('>d', p.get_bytes(8))
-            self._logger.debug("Found a number [%d]...", number)
+            self._logger.debug("Found a number [%s]...", number)
             return int(number[0])
 
         # BOOLEAN
@@ -269,5 +269,6 @@ class RTMPParser(object):
 
         # Unknown object
         else:
-            self._logger.error("Found an unknown RTMP object: 0x%x", ord(b))
+            self._logger.error(
+                "Found an unknown RTMP object: 0x{:x}".format(ord(b)))
             return None
