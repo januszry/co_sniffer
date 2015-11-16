@@ -74,8 +74,8 @@ class Commands(object):
     def output_txt(self):
         """Get plain text of stream properties."""
         result = [self.stream_info['url']]
-        for p in []:
-            if p in self.stream_info and len(self.stream_info[p]) > 0:
-                result.append("{}: {}".format(p, self.stream_info[p]))
+        for k, v in self.stream_info.items():
+            if k in ['user-agent', 'referer']:
+                result.append("{}: {}".format(k, v))
 
         return '\n'.join(result)

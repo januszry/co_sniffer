@@ -27,11 +27,16 @@ class HTTPParser(object):
             http_cmd.args['path'] = data[0][
                 data[0].find(' ') + 1: data[0].rfind(' ')]
             for c in data:
-                if ': ' in c and 'host' in c.lower():
-                    http_cmd.args['host'] = c[c.find(': ') + 2:]
-                    if not http_cmd.args['host']:
-                        return None
-                    return http_cmd
+                if ': ' not in c:
+                    continue
+                (k, v) = c.split(': ', 1)
+                v = v.strip()
+                if k.lower() in ['host', 'user-agent', 'referer'] and v:
+                    http_cmd.args[k.lower()] = v
+
+            if not http_cmd.args.get('host'):
+                return None
+            return http_cmd
 
         # Check if reverse session indicates a valid stream media
         elif method == 'HTT' or method == 'ICY':
