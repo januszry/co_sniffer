@@ -1,7 +1,6 @@
-src/qtsniffer/*.pyc
-src/qtsniffer/__pycache__/*
-src/qtsniffer/lib/*.pyc
-src/qtsniffer/lib/__pycache__/*
-src/build/*
-src/dist/*
-src/qtsniffer.egg-info/*
+*.pyc
+*.egg-info
+__pycache__
+build
+dist
+.ropeproject

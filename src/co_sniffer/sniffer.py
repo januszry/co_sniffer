@@ -24,17 +24,19 @@ from .lib.rtspcommand import RTSPCommands
 from .lib.httpparser import HTTPParser
 from .lib.httpcommand import HTTPCommands
 
+from .utils import config_logger
+
 
 all_devices = {}
 sessions = {}
 # Session here is different from session in RFC: Only one direction, i.e.
 # A -> B and B -> A are 2 sessions
 
-SNIFF_RTMP = True
-SNIFF_MMSP = True
-SNIFF_WMSP = True
-SNIFF_RTSP = True
-SNIFF_HTTP = True
+SNIFF_RTMP = os.environ.get('SNIFF_RTMP', False)
+SNIFF_MMSP = os.environ.get('SNIFF_MMSP', False)
+SNIFF_WMSP = os.environ.get('SNIFF_WMSP', False)
+SNIFF_RTSP = os.environ.get('SNIFF_RTSP', False)
+SNIFF_HTTP = os.environ.get('SNIFF_HTTP', True)
 SNIFF_TIMEOUT = 1800
 RELEASE_TIMEOUT = 10
 
@@ -49,6 +51,9 @@ quit_first = False
 result = []
 
 sniff_result_file = None
+
+logger = logging.getLogger()
+config_logger(logger)
 
 
 def reverse_session_id(session_id):
@@ -302,8 +307,6 @@ def setup_arg_parser():
         default=SNIFF_TIMEOUT, help="Timeout diff from default")
     parser.add_argument("--tmp_dir", default='/tmp')
     parser.add_argument("--result_pickle", default='qtsniffer.pickle')
-    parser.add_argument("--log_dir", default='/tmp')
-    parser.add_argument("--log_file", default='qtsniffer.log')
 
     group_input = parser.add_argument_group("Input")
     group = group_input.add_mutually_exclusive_group()
@@ -356,29 +359,8 @@ def sniff(pcapfile=None, device=None, timeout=SNIFF_TIMEOUT):
 
 def main():
     args = setup_arg_parser()
-
-    log_format = "[%(levelname)s]<%(module)s>-%(funcName)s:"
-    log_format += " %(message)s --- %(asctime)s"
-    log_formatter = logging.Formatter(log_format)
-
-    logger = logging.getLogger()
-    if os.path.isdir(args.log_dir):
-        logfile = os.path.join(args.log_dir, args.log_file)
-        logfile_handler = logging.FileHandler(logfile)
-        logfile_handler.setFormatter(log_formatter)
-        logger.addHandler(logfile_handler)
-    else:
-        print("Specified log_dir %s not exists, only write to stderr")
-
-    logstream_handler = logging.StreamHandler()
-    logstream_handler.setFormatter(log_formatter)
-
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logstream_handler)
-
     if args.debug:
         logger.setLevel(logging.DEBUG)
-
     logger.info('-' * 20 + " Stream Sniffer " + '-' * 20)
 
     # listen_port = args.port

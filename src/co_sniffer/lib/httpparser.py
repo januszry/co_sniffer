@@ -40,23 +40,23 @@ class HTTPParser(object):
 
         # Check if reverse session indicates a valid stream media
         elif method == 'HTT' or method == 'ICY':
-            http_content_type_prefixes = [
-                'content-type: audio',
-                'content-type:audio',
-                'content-type:video',
-                'content-type: application/vnd.apple.mpegurl',
-                'content-type:application/vnd.apple.mpegurl',
-                'content-type: application/x-mpegurl',
-                'content-type:application/x-mpegurl',
-                'content-type: application/flv',
-                'content-type:application/flv',
-                'content-type: application/ogg',
-                'content-type:application/ogg',
-                'content-type: flv-application/octet-stream',
-                'content-type:flv-application/octet-stream']
+            http_content_types = [
+                'audio',
+                'video',
+                'application/vnd.apple.mpegurl',
+                'application/x-mpegurl',
+                'application/flv',
+                'application/ogg',
+                'flv-application/octet-stream',
+            ]
             http_cmd.name = 'STREAM_RESP'
             for c in data:
                 c = c.lower()
-                for p in http_content_type_prefixes:
-                    if c.startswith(p):
-                        return http_cmd
+                for t in http_content_types:
+                    prefixes = [
+                        'content-type: {}'.format(t),
+                        'content-type:{}'.format(t),
+                    ]
+                    for p in prefixes:
+                        if c.startswith(p):
+                            return http_cmd
