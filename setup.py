@@ -10,8 +10,8 @@ setup(
     license='MIT License',
 
     url='',
-    author='zengruoyu',
-    author_email='zengruoyu@qingtingfm.com',
+    author='coppla',
+    author_email='januszry@gmail.com',
 
     packages=find_packages(),
     include_package_data=True,
